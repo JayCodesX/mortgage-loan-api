@@ -1,0 +1,9 @@
+/target/
+/.m2/
+web/node_modules/
+web/dist/
+nginx/certs/*.key
+nginx/certs/*.crt
+nginx/certs/*.pem
+*.log
+.DS_Store

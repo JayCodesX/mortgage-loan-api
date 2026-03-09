@@ -29,7 +29,7 @@ Traffic flow:
 
 ## Run Everything with Docker
 ```bash
-cd /Users/JayCodesX/Projects/mortgage-loan-api
+cd <your-project-folder>/mortgage-loan-api
 docker compose up -d --build
 ```
 
@@ -108,7 +108,7 @@ One-command alternative:
 ### 4) Schedule automatic renewal
 Example cron (host machine):
 ```bash
-0 3 * * * cd /Users/JayCodesX/Projects/mortgage-loan-api && ./scripts/tls-renew.sh
+0 3 * * * cd <your-project-folder>/mortgage-loan-api && ./scripts/tls-renew.sh
 ```
 
 ## Local Dev (No Docker for app)
@@ -119,13 +119,13 @@ docker compose up -d mysql
 
 Run backend:
 ```bash
-cd /Users/JayCodesX/Projects/mortgage-loan-api
+cd <your-project-folder>/mortgage-loan-api
 mvn -Dmaven.repo.local=.m2 spring-boot:run
 ```
 
 Run frontend:
 ```bash
-cd /Users/JayCodesX/Projects/mortgage-loan-api/web
+cd <your-project-folder>/mortgage-loan-api/web
 npm install
 VITE_API_BASE_URL=http://localhost:8080 npm run dev
 ```
@@ -137,7 +137,7 @@ mvn -Dmaven.repo.local=.m2 clean package
 
 ## Build Frontend
 ```bash
-cd /Users/JayCodesX/Projects/mortgage-loan-api/web
+cd <your-project-folder>/mortgage-loan-api/web
 npm run build
 ```
 
@@ -203,12 +203,12 @@ npm run build
 - `mysql_data` persists database data across container restarts.
 
 ## Key Config Files
-- `/Users/JayCodesX/Projects/mortgage-loan-api/docker-compose.yml`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/Dockerfile`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/nginx/default.conf`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/nginx/default.prod.conf`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/nginx/Dockerfile`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/web/Dockerfile`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/web/nginx.conf`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/scripts/tls-init.sh`
-- `/Users/JayCodesX/Projects/mortgage-loan-api/scripts/tls-renew.sh`
+- `docker-compose.yml`
+- `Dockerfile`
+- `nginx/default.conf`
+- `nginx/default.prod.conf`
+- `nginx/Dockerfile`
+- `web/Dockerfile`
+- `web/nginx.conf`
+- `scripts/tls-init.sh`
+- `scripts/tls-renew.sh`

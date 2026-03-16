@@ -282,10 +282,10 @@ make smoke
 ```
 
 What it verifies:
-- edge health endpoint
+- borrower quote flow
+- borrower auth redirect before personalization
 - seeded admin login
-- admin summary endpoint
-- public quote creation
+- admin workspace access
 
 ### Make targets
 ```bash

@@ -73,9 +73,15 @@ services:
       mysql:
         condition: service_healthy
       borrower-service:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8080"
 
@@ -99,6 +105,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8086/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8086"
 
@@ -125,6 +137,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8087/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8087"
 
@@ -169,9 +187,15 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       localstack:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8084/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8084"
 
@@ -210,9 +234,15 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       localstack:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8085"
 
@@ -240,9 +270,15 @@ services:
       APP_SERVICE_TOKEN_SCOPE: notification:write
     depends_on:
       redis:
-        condition: service_started
+        condition: service_healthy
       localstack:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8089/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     expose:
       - "8089"
 
@@ -256,7 +292,14 @@ services:
     container_name: mortgage-loan-admin-web
     mem_limit: 96m
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     expose:
       - "80"
 
@@ -269,7 +312,14 @@ services:
     container_name: mortgage-loan-web
     mem_limit: 96m
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     expose:
       - "80"
 
@@ -280,9 +330,20 @@ services:
     container_name: mortgage-loan-edge
     mem_limit: 96m
     depends_on:
-      - web
-      - api
-      - borrower-service
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      borrower-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     ports:
       - "8088:80"
       - "8443:443"
@@ -354,6 +415,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   localstack:
     profiles: ["integration"]
@@ -368,6 +434,12 @@ services:
     volumes:
       - ./localstack/init:/etc/localstack/init/ready.d
       - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4566/_localstack/health | grep -q '\"sqs\": \"running\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
 
 volumes:
   mysql_data:

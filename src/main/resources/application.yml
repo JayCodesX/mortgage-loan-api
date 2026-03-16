@@ -10,6 +10,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false
   jpa:
     hibernate:
       ddl-auto: update
@@ -71,10 +73,14 @@ app:
     jwk-set-uri: ${APP_USER_TOKEN_JWK_SET_URI:}
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info
 
 server:
   port: 8080

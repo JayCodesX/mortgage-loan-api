@@ -212,10 +212,20 @@ Use this when you need async pricing, lead generation, notifications, admin-web,
 docker compose --env-file .env.integration --profile integration up -d --build
 ```
 
+Or:
+```bash
+make up
+```
+
 Stop the stack:
 
 ```bash
 docker compose --env-file .env.integration --profile integration down
+```
+
+Or:
+```bash
+make down
 ```
 
 ### Why the integration env file exists
@@ -257,6 +267,32 @@ cd e2e
 npm run test
 cd ..
 docker compose --env-file .env.integration --profile integration down
+```
+
+### Local smoke check
+Use the checked-in smoke runner after the integration stack is up:
+
+```bash
+./scripts/local-smoke.sh
+```
+
+Or:
+```bash
+make smoke
+```
+
+What it verifies:
+- edge health endpoint
+- seeded admin login
+- admin summary endpoint
+- public quote creation
+
+### Make targets
+```bash
+make up
+make smoke
+make e2e
+make down
 ```
 
 Covered flows:

@@ -10,6 +10,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      repositories:
+        enabled: false
   jpa:
     hibernate:
       ddl-auto: update
@@ -44,6 +46,10 @@ app:
     ttl-seconds: ${APP_OUTBOUND_SERVICE_TOKEN_TTL_SECONDS:300}
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:

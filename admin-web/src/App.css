@@ -237,3 +237,17 @@ body {
     align-items: stretch !important;
   }
 }
+
+.admin-table thead th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-muted);
+  border-bottom-width: 1px;
+}
+
+.admin-table tbody td {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  border-color: rgba(18, 49, 79, 0.08);
+}

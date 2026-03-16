@@ -2,6 +2,8 @@ const tabLabels = {
   dashboard: 'Dashboard',
   'quote-lab': 'Quote Lab',
   workspace: 'Workspace',
+  pricing: 'Pricing',
+  reports: 'Reports',
   docs: 'Docs',
 }
 

@@ -6,13 +6,17 @@ import AdminNav from './components/AdminNav'
 import DashboardView from './components/DashboardView'
 import QuoteLabView from './components/QuoteLabView'
 import WorkspaceView from './components/WorkspaceView'
+import PricingView from './components/PricingView'
+import ReportsView from './components/ReportsView'
 import DocsView from './components/DocsView'
 import {
   API_BASE_URL,
   defaultAdminLogin,
   defaultBorrowerForm,
   defaultLoanForm,
+  defaultProductForm,
   defaultQuoteForm,
+  defaultReportForm,
   formatCurrency,
   getOrCreateSessionId,
   getStoredAuth,
@@ -32,6 +36,11 @@ function App() {
   const [loanForm, setLoanForm] = useState(defaultLoanForm)
   const [loanLookupId, setLoanLookupId] = useState('')
   const [loanResult, setLoanResult] = useState(null)
+  const [productForm, setProductForm] = useState(defaultProductForm)
+  const [products, setProducts] = useState([])
+  const [editingProductId, setEditingProductId] = useState(null)
+  const [reportForm, setReportForm] = useState(defaultReportForm)
+  const [reportResult, setReportResult] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const [loadingTarget, setLoadingTarget] = useState('')
   const [sessionId] = useState(() => getOrCreateSessionId())
@@ -45,6 +54,8 @@ function App() {
     quoteById: `${API_BASE_URL}/loan-quotes`,
     borrowers: `${API_BASE_URL}/borrowers`,
     loans: `${API_BASE_URL}/loans`,
+    products: `${API_BASE_URL}/admin/products`,
+    reports: `${API_BASE_URL}/admin/reports/query`,
     mortgage: `${API_BASE_URL}/loans/mortgage-payment/calculate`,
     amortization: `${API_BASE_URL}/loans/amortization/calculate`,
   }), [])
@@ -86,6 +97,10 @@ function App() {
       if (!response.ok) {
         const errorBody = await response.text()
         throw new Error(errorBody || 'Unable to complete this admin request.')
+      }
+
+      if (response.status === 204) {
+        return {}
       }
 
       return await response.json()
@@ -249,6 +264,89 @@ function App() {
     }
   }
 
+  const loadProducts = async () => {
+    const result = await callApi('products', endpointPreview.products, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${authState.accessToken}` },
+    })
+
+    if (result) {
+      setProducts(result)
+    }
+  }
+
+  const startEditProduct = (product) => {
+    setEditingProductId(product.id)
+    setProductForm({
+      programCode: product.programCode,
+      productName: product.productName,
+      baseRate: String(product.baseRate),
+      active: String(product.active),
+    })
+  }
+
+  const resetProductForm = () => {
+    setEditingProductId(null)
+    setProductForm(defaultProductForm)
+  }
+
+  const saveProduct = async (event) => {
+    event.preventDefault()
+    const endpoint = editingProductId ? `${endpointPreview.products}/${editingProductId}` : endpointPreview.products
+    const method = editingProductId ? 'PUT' : 'POST'
+    const result = await callApi('save-product', endpoint, {
+      method,
+      headers: {
+        Authorization: `Bearer ${authState.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...productForm,
+        baseRate: Number(productForm.baseRate),
+        active: productForm.active === 'true',
+      }),
+    })
+
+    if (result) {
+      resetProductForm()
+      loadProducts()
+      fetchSummary()
+    }
+  }
+
+  const deleteProduct = async (id) => {
+    const result = await callApi(`delete-product-${id}`, `${endpointPreview.products}/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${authState.accessToken}` },
+    })
+
+    if (result !== null) {
+      setProducts((current) => current.filter((product) => product.id !== id))
+      fetchSummary()
+    }
+  }
+
+  const runReport = async (event) => {
+    event.preventDefault()
+    const result = await callApi('run-report', endpointPreview.reports, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authState.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...reportForm,
+        activeOnly: reportForm.activeOnly === 'true',
+        minCreditScore: reportForm.minCreditScore ? Number(reportForm.minCreditScore) : null,
+        maxCreditScore: reportForm.maxCreditScore ? Number(reportForm.maxCreditScore) : null,
+      }),
+    })
+
+    if (result) {
+      setReportResult(result)
+    }
+  }
+
   const handleSignOut = () => {
     saveAuthState(null)
     setSummary(null)
@@ -256,6 +354,8 @@ function App() {
     setBorrowers([])
     setCreatedBorrower(null)
     setLoanResult(null)
+    setProducts([])
+    setReportResult(null)
     setErrorMessage('')
   }
 
@@ -264,6 +364,12 @@ function App() {
       fetchSummary()
     }
   }, [isAdmin])
+
+  useEffect(() => {
+    if (isAdmin && activeTab === 'pricing') {
+      loadProducts()
+    }
+  }, [activeTab, isAdmin])
 
   const quoteOutcomeData = summary ? [
     { label: 'Completed', value: summary.quotes.quotesCompleted },
@@ -342,6 +448,33 @@ function App() {
             fetchLoan={fetchLoan}
             handleInput={handleInput}
             formatCurrency={formatCurrency}
+          />
+        ) : null}
+
+        {activeTab === 'pricing' ? (
+          <PricingView
+            productForm={productForm}
+            setProductForm={setProductForm}
+            products={products}
+            editingProductId={editingProductId}
+            loadingTarget={loadingTarget}
+            loadProducts={loadProducts}
+            saveProduct={saveProduct}
+            startEditProduct={startEditProduct}
+            resetProductForm={resetProductForm}
+            deleteProduct={deleteProduct}
+            handleInput={handleInput}
+          />
+        ) : null}
+
+        {activeTab === 'reports' ? (
+          <ReportsView
+            reportForm={reportForm}
+            setReportForm={setReportForm}
+            reportResult={reportResult}
+            loadingTarget={loadingTarget}
+            runReport={runReport}
+            handleInput={handleInput}
           />
         ) : null}
 

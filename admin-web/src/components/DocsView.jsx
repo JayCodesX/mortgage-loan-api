@@ -1,28 +1,16 @@
 export default function DocsView({ endpointPreview }) {
-  const endpoints = [
-    `POST ${endpointPreview.login}`,
-    `GET ${endpointPreview.adminSummary}`,
-    `POST ${endpointPreview.publicQuote}`,
-    `GET ${endpointPreview.quoteById}/1`,
-    `GET ${endpointPreview.borrowers}`,
-    `POST ${endpointPreview.borrowers}`,
-    `POST ${endpointPreview.loans}`,
-    `GET ${endpointPreview.loans}/1`,
-    `GET ${endpointPreview.mortgage}?loanAmount=450000&downPayment=90000&annualInterestRate=6.5&termYears=30`,
-    `GET ${endpointPreview.amortization}?principal=350000&annualInterestRate=6.5&termYears=30`,
-  ]
-
   return (
-    <div className="admin-panel">
-      <h2 className="h4 mb-3">Internal API catalog</h2>
-      <p className="text-secondary mb-4">These endpoints stay out of the public navigation and are available from the internal console instead.</p>
-      <div className="row g-3 docs-grid">
-        {endpoints.map((endpoint) => (
-          <div key={endpoint} className="col-lg-6">
-            <div className="doc-card">{endpoint}</div>
-          </div>
-        ))}
-      </div>
+    <div className="row g-4 docs-grid">
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Auth</strong><div>{endpointPreview.login}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Admin summary</strong><div>{endpointPreview.adminSummary}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Public quote</strong><div>{endpointPreview.publicQuote}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Quote lookup</strong><div>{endpointPreview.quoteById}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Borrowers</strong><div>{endpointPreview.borrowers}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Loans</strong><div>{endpointPreview.loans}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Admin products</strong><div>{endpointPreview.products}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Admin reports</strong><div>{endpointPreview.reports}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Mortgage calculator</strong><div>{endpointPreview.mortgage}</div></article></div>
+      <div className="col-md-6 col-xl-3"><article className="doc-card"><strong>Amortization</strong><div>{endpointPreview.amortization}</div></article></div>
     </div>
   )
 }

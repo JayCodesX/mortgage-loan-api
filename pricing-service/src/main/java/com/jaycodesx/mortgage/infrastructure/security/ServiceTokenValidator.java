@@ -22,6 +22,13 @@ public class ServiceTokenValidator {
         this.signingKey = Keys.hmacShaKeyFor(properties.secret().getBytes(StandardCharsets.UTF_8));
     }
 
+    public void validatePricingTokenHeader(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing service bearer token");
+        }
+        validatePricingToken(authorizationHeader.substring("Bearer ".length()).trim());
+    }
+
     public void validatePricingToken(String token) {
         if (token == null || token.isBlank()) {
             throw new IllegalArgumentException("Missing service token");

@@ -32,6 +32,23 @@ export const defaultLoanForm = {
   status: 'PENDING',
 }
 
+export const defaultProductForm = {
+  programCode: 'CONVENTIONAL',
+  productName: 'Demo 30-Year Fixed',
+  baseRate: '6.1250',
+  active: 'true',
+}
+
+export const defaultReportForm = {
+  reportType: 'PRODUCTS',
+  search: '',
+  activeOnly: 'false',
+  status: '',
+  minCreditScore: '',
+  maxCreditScore: '',
+  programCode: '',
+}
+
 export function getStoredAuth() {
   if (typeof window === 'undefined') {
     return null

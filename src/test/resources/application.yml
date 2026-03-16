@@ -8,3 +8,24 @@ spring:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
+app:
+  seed:
+    enabled: false
+  messaging:
+    enabled: false
+    consumer-enabled: false
+  service-token:
+    secret: test-service-token-secret-12345678901234567890
+    issuer: mortgage-loan-api
+    audience: pricing-service
+    scope: pricing:write
+    ttl-seconds: 300
+  borrower-service:
+    base-url: http://localhost:8087
+    secret: borrower-service-test-secret-12345678901234567890
+    audience: borrower-service
+    scope: borrower:read
+  user-token:
+    secret: test-user-token-secret-12345678901234567890
+    issuer: auth-service
+    audience: mortgage-loan-api

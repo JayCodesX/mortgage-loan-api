@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
   echo "Usage: $0 <domain> <email>"
-  echo "Example: $0 api.jaycodesx.com jay@example.com"
+  echo "Example: $0 api.jaycodesx.com jay@jaycodesx.dev"
   exit 1
 fi
 

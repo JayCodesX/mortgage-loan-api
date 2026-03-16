@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: notification-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+app:
+  messaging:
+    enabled: ${APP_MESSAGING_ENABLED:true}
+    consumer-enabled: ${APP_MESSAGING_CONSUMER_ENABLED:true}
+    queue-name: ${APP_MESSAGING_QUEUE_NAME:quote-notification-events}
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:us-east-1}
+    poll-delay-ms: ${APP_MESSAGING_POLL_DELAY_MS:3000}
+  service-token:
+    secret: ${APP_SERVICE_TOKEN_SECRET:dev-only-notification-service-secret-change-me-1234567890}
+    issuer: ${APP_SERVICE_TOKEN_ISSUER:mortgage-loan-api}
+    audience: ${APP_SERVICE_TOKEN_AUDIENCE:notification-service}
+    scope: ${APP_SERVICE_TOKEN_SCOPE:notification:write}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+server:
+  port: 8089

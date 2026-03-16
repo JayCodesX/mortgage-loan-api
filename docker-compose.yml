@@ -1,19 +1,264 @@
+x-java-env: &java-env
+  JAVA_TOOL_OPTIONS: -XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=65.0 -Djava.security.egd=file:/dev/./urandom
+
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: mortgage-loan-api
+    mem_limit: 512m
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/mortgage_loan_api?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      <<: *java-env
+      DB_URL: jdbc:mysql://mysql:3306/mortgage_quote_workflow?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USERNAME: root
       DB_PASSWORD: root
       CORS_ALLOWED_ORIGINS: http://localhost:8088,https://localhost:8443
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_MESSAGING_ENABLED: ${APP_MESSAGING_ENABLED:-false}
+      APP_MESSAGING_CONSUMER_ENABLED: ${APP_MESSAGING_CONSUMER_ENABLED:-false}
+      APP_MESSAGING_QUEUE_NAME: quote-pricing-requests
+      APP_PRICING_RESULT_QUEUE_NAME: quote-pricing-results
+      APP_LEAD_RESULT_QUEUE_NAME: quote-lead-results
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      APP_SERVICE_TOKEN_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_SERVICE_TOKEN_ISSUER: mortgage-loan-api
+      APP_SERVICE_TOKEN_AUDIENCE: pricing-service
+      APP_SERVICE_TOKEN_SCOPE: pricing:write
+      APP_PRICING_RESULT_TOKEN_SECRET: local-dev-pricing-result-secret-1234567890
+      APP_PRICING_RESULT_TOKEN_ISSUER: pricing-service
+      APP_PRICING_RESULT_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_PRICING_RESULT_TOKEN_SCOPE: quote:write
+      APP_LEAD_RESULT_TOKEN_SECRET: local-dev-lead-result-secret-1234567890
+      APP_LEAD_RESULT_TOKEN_ISSUER: lead-service
+      APP_LEAD_RESULT_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_LEAD_RESULT_TOKEN_SCOPE: lead:write
+      APP_NOTIFICATION_TOKEN_SECRET: local-dev-notification-service-secret-1234567890
+      APP_NOTIFICATION_TOKEN_AUDIENCE: notification-service
+      APP_NOTIFICATION_TOKEN_SCOPE: notification:write
+      APP_BORROWER_SERVICE_BASE_URL: http://borrower-service:8087
+      APP_BORROWER_SERVICE_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_BORROWER_SERVICE_AUDIENCE: borrower-service
+      APP_BORROWER_SERVICE_SCOPE: borrower:read
+      APP_USER_TOKEN_SECRET: local-dev-user-token-secret-1234567890
+      APP_USER_TOKEN_PROVIDER: ${APP_USER_TOKEN_PROVIDER:-internal}
+      APP_USER_TOKEN_ISSUER: auth-service
+      APP_USER_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_USER_TOKEN_JWK_SET_URI: ${APP_USER_TOKEN_JWK_SET_URI:-}
+      APP_INTERNAL_ADMIN_BORROWER_BASE_URL: http://borrower-service:8087
+      APP_INTERNAL_ADMIN_BORROWER_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_INTERNAL_ADMIN_BORROWER_AUDIENCE: borrower-service
+      APP_INTERNAL_ADMIN_BORROWER_SCOPE: borrower:read
+      APP_INTERNAL_ADMIN_PRICING_BASE_URL: http://pricing-service:8084
+      APP_INTERNAL_ADMIN_PRICING_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_INTERNAL_ADMIN_PRICING_AUDIENCE: pricing-service
+      APP_INTERNAL_ADMIN_PRICING_SCOPE: pricing:write
+      APP_INTERNAL_ADMIN_LEAD_BASE_URL: http://lead-service:8085
+      APP_INTERNAL_ADMIN_LEAD_SECRET: local-dev-lead-service-secret-1234567890
+      APP_INTERNAL_ADMIN_LEAD_AUDIENCE: lead-service
+      APP_INTERNAL_ADMIN_LEAD_SCOPE: lead:write
+      APP_INTERNAL_ADMIN_AUTH_BASE_URL: http://auth-service:8086
+      APP_INTERNAL_ADMIN_AUTH_SECRET: local-dev-user-token-secret-1234567890
+      APP_INTERNAL_ADMIN_AUTH_AUDIENCE: mortgage-loan-api
+      APP_INTERNAL_ADMIN_AUTH_SCOPE: auth:read
+      APP_INTERNAL_ADMIN_NOTIFICATION_BASE_URL: http://notification-service:8089
+      APP_INTERNAL_ADMIN_NOTIFICATION_SECRET: local-dev-notification-service-secret-1234567890
+      APP_INTERNAL_ADMIN_NOTIFICATION_AUDIENCE: notification-service
+      APP_INTERNAL_ADMIN_NOTIFICATION_SCOPE: notification:write
+    depends_on:
+      mysql:
+        condition: service_healthy
+      borrower-service:
+        condition: service_started
+      redis:
+        condition: service_started
+    expose:
+      - "8080"
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: mortgage-loan-auth-service
+    mem_limit: 384m
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:mysql://mysql:3306/mortgage_auth?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      APP_USER_TOKEN_SECRET: local-dev-user-token-secret-1234567890
+      APP_USER_TOKEN_PROVIDER: ${APP_USER_TOKEN_PROVIDER:-internal}
+      APP_USER_TOKEN_ISSUER: auth-service
+      APP_USER_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_USER_TOKEN_JWK_SET_URI: ${APP_USER_TOKEN_JWK_SET_URI:-}
+      APP_USER_TOKEN_TTL_SECONDS: 900
     depends_on:
       mysql:
         condition: service_healthy
     expose:
-      - "8080"
+      - "8086"
+
+  borrower-service:
+    build:
+      context: ./borrower-service
+      dockerfile: Dockerfile
+    container_name: mortgage-loan-borrower-service
+    mem_limit: 384m
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:mysql://mysql:3306/mortgage_borrower?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      APP_USER_TOKEN_SECRET: local-dev-user-token-secret-1234567890
+      APP_USER_TOKEN_PROVIDER: ${APP_USER_TOKEN_PROVIDER:-internal}
+      APP_USER_TOKEN_ISSUER: auth-service
+      APP_USER_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_USER_TOKEN_JWK_SET_URI: ${APP_USER_TOKEN_JWK_SET_URI:-}
+      APP_SERVICE_TOKEN_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_SERVICE_TOKEN_ISSUER: mortgage-loan-api
+      APP_SERVICE_TOKEN_AUDIENCE: borrower-service
+      APP_SERVICE_TOKEN_SCOPE: borrower:read
+    depends_on:
+      mysql:
+        condition: service_healthy
+    expose:
+      - "8087"
+
+  pricing-service:
+    profiles: ["integration"]
+    build:
+      context: ./pricing-service
+      dockerfile: Dockerfile
+    container_name: mortgage-loan-pricing-service
+    mem_limit: 448m
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:mysql://mysql:3306/mortgage_pricing?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_MESSAGING_ENABLED: true
+      APP_MESSAGING_CONSUMER_ENABLED: true
+      APP_MESSAGING_QUEUE_NAME: quote-pricing-requests
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      APP_LEAD_MESSAGING_ENABLED: true
+      APP_LEAD_MESSAGING_QUEUE_NAME: quote-lead-requests
+      APP_PRICING_RESULT_MESSAGING_ENABLED: true
+      APP_PRICING_RESULT_QUEUE_NAME: quote-pricing-results
+      APP_SERVICE_TOKEN_SECRET: local-dev-pricing-service-secret-1234567890
+      APP_SERVICE_TOKEN_ISSUER: mortgage-loan-api
+      APP_SERVICE_TOKEN_AUDIENCE: pricing-service
+      APP_SERVICE_TOKEN_SCOPE: pricing:write
+      APP_OUTBOUND_SERVICE_TOKEN_SECRET: local-dev-lead-service-secret-1234567890
+      APP_OUTBOUND_SERVICE_TOKEN_ISSUER: pricing-service
+      APP_OUTBOUND_SERVICE_TOKEN_AUDIENCE: lead-service
+      APP_OUTBOUND_SERVICE_TOKEN_SCOPE: lead:write
+      APP_PRICING_RESULT_TOKEN_SECRET: local-dev-pricing-result-secret-1234567890
+      APP_PRICING_RESULT_TOKEN_ISSUER: pricing-service
+      APP_PRICING_RESULT_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_PRICING_RESULT_TOKEN_SCOPE: quote:write
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      localstack:
+        condition: service_started
+    expose:
+      - "8084"
+
+  lead-service:
+    profiles: ["integration"]
+    build:
+      context: ./lead-service
+      dockerfile: Dockerfile
+    container_name: mortgage-loan-lead-service
+    mem_limit: 448m
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:mysql://mysql:3306/mortgage_lead?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_MESSAGING_ENABLED: true
+      APP_MESSAGING_CONSUMER_ENABLED: true
+      APP_MESSAGING_QUEUE_NAME: quote-lead-requests
+      APP_LEAD_RESULT_MESSAGING_ENABLED: true
+      APP_LEAD_RESULT_QUEUE_NAME: quote-lead-results
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      APP_SERVICE_TOKEN_SECRET: local-dev-lead-service-secret-1234567890
+      APP_SERVICE_TOKEN_ISSUER: pricing-service
+      APP_SERVICE_TOKEN_AUDIENCE: lead-service
+      APP_SERVICE_TOKEN_SCOPE: lead:write
+      APP_OUTBOUND_SERVICE_TOKEN_SECRET: local-dev-lead-result-secret-1234567890
+      APP_OUTBOUND_SERVICE_TOKEN_ISSUER: lead-service
+      APP_OUTBOUND_SERVICE_TOKEN_AUDIENCE: mortgage-loan-api
+      APP_OUTBOUND_SERVICE_TOKEN_SCOPE: lead:write
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      localstack:
+        condition: service_started
+    expose:
+      - "8085"
+
+  notification-service:
+    profiles: ["integration"]
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: mortgage-loan-notification-service
+    mem_limit: 320m
+    environment:
+      <<: *java-env
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      APP_MESSAGING_ENABLED: true
+      APP_MESSAGING_CONSUMER_ENABLED: true
+      APP_MESSAGING_QUEUE_NAME: quote-notification-events
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      APP_SERVICE_TOKEN_SECRET: local-dev-notification-service-secret-1234567890
+      APP_SERVICE_TOKEN_ISSUER: mortgage-loan-api
+      APP_SERVICE_TOKEN_AUDIENCE: notification-service
+      APP_SERVICE_TOKEN_SCOPE: notification:write
+    depends_on:
+      redis:
+        condition: service_started
+      localstack:
+        condition: service_started
+    expose:
+      - "8089"
+
+  admin-web:
+    profiles: ["integration"]
+    build:
+      context: ./admin-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: mortgage-loan-admin-web
+    mem_limit: 96m
+    depends_on:
+      - api
+    expose:
+      - "80"
 
   web:
     build:
@@ -22,6 +267,7 @@ services:
       args:
         VITE_API_BASE_URL: /api
     container_name: mortgage-loan-web
+    mem_limit: 96m
     depends_on:
       - api
     expose:
@@ -32,9 +278,11 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: mortgage-loan-edge
+    mem_limit: 96m
     depends_on:
       - web
       - api
+      - borrower-service
     ports:
       - "8088:80"
       - "8443:443"
@@ -45,7 +293,10 @@ services:
     container_name: mortgage-loan-edge-prod
     depends_on:
       - web
+      - admin-web
       - api
+      - borrower-service
+      - notification-service
     ports:
       - "80:80"
       - "443:443"
@@ -62,12 +313,29 @@ services:
       - certbot_www:/var/www/certbot
       - letsencrypt:/etc/letsencrypt
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.5
+    profiles: ["oidc"]
+    container_name: mortgage-loan-keycloak
+    command:
+      - start-dev
+      - --import-realm
+      - --http-port=8080
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/realm-import:/opt/keycloak/data/import:ro
+    ports:
+      - "18080:8080"
+
   mysql:
     image: mysql:8.4
     container_name: mortgage-loan-mysql
+    mem_limit: 768m
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mortgage_loan_api
+      MYSQL_DATABASE: mortgage_quote_workflow
     ports:
       - "3307:3306"
     volumes:
@@ -78,7 +346,32 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: mortgage-loan-redis
+    mem_limit: 128m
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  localstack:
+    profiles: ["integration"]
+    image: localstack/localstack:3.8
+    container_name: mortgage-loan-localstack
+    mem_limit: 256m
+    environment:
+      SERVICES: sqs
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./localstack/init:/etc/localstack/init/ready.d
+      - localstack_data:/var/lib/localstack
+
 volumes:
   mysql_data:
+  redis_data:
+  localstack_data:
   certbot_www:
   letsencrypt:
